@@ -2,20 +2,31 @@ clc
 clear all
 close all
 %%
+%Parameters
 W = (1/(31*31))*ones(31);
 c = 2.3;
+sThin=1;
+lThin=5;
+sThick=1.5;
+lThick=9;
+sThinFDOG=sThin;
+lThinFDOG=lThin;
+sThickFDOG =sThick;
+lThickFDOG=lThick;
+direction=8;
 %reads image
-A=imread('01_test.tif');
+A=imread('im0002.ppm');
 %A=double(A);
-figure,imshow(A,[]);
+% figure,imshow(A,[]);
 
 %Green Channel extraction
 gA=A(:,:,2);
 figure,imshow(gA,[]);
 %%
+
+
 %Match-Filter Kernel for thin vessel
-sThin=1;
-lThin=5;
+
 kerThin=meshgrid(-3:3,1);
 kerThin=(-1/(sqrt(2*pi)*sThin))*exp(-(kerThin.^2)/(2*(sThin^2)));
 
@@ -28,13 +39,13 @@ kerThin=(-1/(sqrt(2*pi)*sThin))*exp(-(kerThin.^2)/(2*(sThin^2)));
 mThin = mean(kerThin);
 kerThin=kerThin-mThin;
 % l=5
-kerThin=repmat(kerThin,[5 1]);
+kerThin=repmat(kerThin,[lThin 1]);
 
 %we got the kernel now we filter it in 8 directions
-thinFilterimg=zeros(size(gA,1),size(gA,2),8);
+thinFilterimg=zeros(size(gA,1),size(gA,2),direction);
 % figure;
-for i=1:8
-    MaskKerthin=imrotate(kerThin,(i-1)*22.5,'bicubic','crop');
+for i=1:direction
+    MaskKerthin=imrotate(kerThin,(i-1)*(180/direction),'bicubic','crop');
     temp = imfilter(gA,MaskKerthin);
     temp=double(temp);
     temp = temp - min(temp(:));
@@ -44,15 +55,14 @@ for i=1:8
 %     subplot(2,4,i),imshow(MaskKerthin,[]);
 end
 finalThin=max(thinFilterimg,[],3);
-
-figure,imshow(finalThin,[]);
+% finalThin=sum(thinFilterimg,3)/3;
+% figure,imshow(finalThin,[]);
 %%
 uhThin=mean(mean(finalThin));
 
 
 %Match-Filter Kernel for thick vessel
-sThick=1.5;
-lThick=9;
+
 kerThick=meshgrid(-4:4,1);
 kerThick=(-1/(sqrt(2*pi)*sThick))*exp(-(kerThick.^2)/(2*(sThick^2)));
 %syms y;
@@ -63,11 +73,11 @@ kerThick=(-1/(sqrt(2*pi)*sThick))*exp(-(kerThick.^2)/(2*(sThick^2)));
 mThick=mean(kerThick);
 kerThick=kerThick-mThick;
 %l=9
-kerThick=repmat(kerThick,[9 1]);
+kerThick=repmat(kerThick,[lThick 1]);
 %we got the kernel and we now filter in 8 directions
-thickFilterimg=zeros(size(gA,1),size(gA,2),8);
-for l=1:8
-    MaskKerthick=imrotate(kerThick,(l-1)*22.5,'bicubic','crop');
+thickFilterimg=zeros(size(gA,1),size(gA,2),direction);
+for l=1:direction
+    MaskKerthick=imrotate(kerThick,(l-1)*(180/direction),'bicubic','crop');
     temp=imfilter(gA,MaskKerthick);
     temp=double(temp);
     temp = temp - min(temp(:));
@@ -77,22 +87,24 @@ for l=1:8
     %thickFilterimg(:,:,l)= imfilter(gA,MaskKerthick);
 end
 finalThick= max(thickFilterimg,[],3);
-figure,imshow(finalThick,[]);
+% finalThick=sum(thickFilterimg,3)/3;
+% figure,imshow(finalThick,[]);
 %%
 uhThick=mean(mean(finalThick));
 
-
+%MF of image
+finalMF=max(finalThick,finalThin);
+figure,imshow(finalMF,[]);
 %FDOG for thin vessels
-sThinFDOG=1;
-lThinFDOG=5;
+
 kerThinFDOG=meshgrid(-3:3,1);
 kerThinFDOG=kerThinFDOG.*((1/(sqrt(2*pi)*(sThinFDOG^3)))*exp(-(kerThinFDOG.^2)/(2*(sThinFDOG^2))));
 % l=5
-kerThinFDOG=repmat(kerThinFDOG,[5 1]);
+kerThinFDOG=repmat(kerThinFDOG,[lThin 1]);
 %we got the kernel now we filter it in 8 directions
-thinFilterimgFDOG=zeros(size(gA,1),size(gA,2),8);
-for m=1:8
-    MaskKerFDOG=imrotate(kerThinFDOG,(m-1)*22.5,'bicubic','crop');
+thinFilterimgFDOG=zeros(size(gA,1),size(gA,2),direction);
+for m=1:direction
+    MaskKerFDOG=imrotate(kerThinFDOG,(m-1)*(180/direction),'bicubic','crop');
     temp= imfilter(gA,MaskKerFDOG);
     temp=double(temp);
     temp = temp - min(temp(:));
@@ -102,49 +114,56 @@ for m=1:8
 end
 finalThinFDOG=max(thinFilterimgFDOG,[],3);
 finalThinFDOGmean= imfilter(finalThinFDOG,W);
-figure,imshow(finalThinFDOGmean,[]);
+% figure,imshow(finalThinFDOGmean,[]);
 %%
 finalThinFDOGmeannorm=finalThinFDOGmean./norm(finalThinFDOGmean(:));
 
-figure,imshow(finalThinFDOGmeannorm,[]);
+% figure,imshow(finalThinFDOGmeannorm,[]);
 %%
 %finalThinFDOGmeannorm= mat2gray(finalThinFDOGmean);
-Tthin= (1+ finalThinFDOGmeannorm)*(2.3*uhThin);
+Tthin= (1+ finalThinFDOGmeannorm)*(c*uhThin);
 
 %FDOG for thick vessels
-sThickFDOG =1.5;
-lThickFDOG=9;
+
 kerThickFDOG=meshgrid(-4:4,1);
 kerThickFDOG=kerThickFDOG.*((1/(sqrt(2*pi)*(sThickFDOG^3)))*exp(-(kerThickFDOG.^2)/(2*(sThickFDOG^2))));
 %l=9
-kerThickFDOG=repmat(kerThickFDOG,[9 1]);
+kerThickFDOG=repmat(kerThickFDOG,[lThick 1]);
 %we got the kernel and we now filter in 8 directions
-thickFilterimgFDOG=zeros(size(gA,1),size(gA,2),8);
-for f=1:8
-    MaskKerFDOG=imrotate(kerThickFDOG,(f-1)*22.5,'bicubic','crop');
+thickFilterimgFDOG=zeros(size(gA,1),size(gA,2),direction);
+for f=1:direction
+    MaskKerFDOG=imrotate(kerThickFDOG,(f-1)*(180/direction),'bicubic','crop');
     temp= imfilter(gA,MaskKerFDOG);
     temp=double(temp);
     temp = temp - min(temp(:));
     temp = temp./max(temp(:));
     temp = temp.*255;
+    
     thickFilterimgFDOG(:,:,f)=temp;
 end
 finalThickFDOG= max(thickFilterimgFDOG,[],3);
 finalThickFDOGmean=imfilter(finalThickFDOG,W);
-figure,imshow(finalThickFDOGmean,[]);
+% figure,imshow(finalThickFDOGmean,[]);
 %%
 finalThickFDOGmeannorm=finalThickFDOGmean./norm(finalThickFDOGmean(:));
-figure, imshow(finalThickFDOGmeannorm,[]);
+% figure, imshow(finalThickFDOGmeannorm,[]);
 %finalThickFDOGmeannorm=mat2gray(finalThickFDOGmean);
 %%
-Tthick=(1+finalThickFDOGmeannorm)*(2.3*uhThick);
+Tthick=(1+finalThickFDOGmeannorm)*(c*uhThick);
 
-resultThin=(finalThin)-(Tthin);
-resultThick=(finalThick)-(Tthick);
+%Mean normalized FDOG
+Dm=max(finalThinFDOGmeannorm,finalThickFDOGmeannorm);
+Tm=(1+Dm)*c*max(uhThin,uhThick);
+figure,imshow(Dm,[]);
+%FDOG of Image
+T=max(Tthin,Tthick);
+
+% resultThin=(finalThin)-(Tthin);
+% resultThick=(finalThick)-(Tthick);
 %imshow(resultThick+resultThin);
 
 %MF-FDOG thin vessel
-resultThin=uint8(resultThin>=0);
+% resultThin=uint8(resultThin>=0);
 % for r=1:size(resultThin,1)
 %     for t=1:size(resultThin,2)
 %         if resultThin(r,t)>=0
@@ -157,7 +176,7 @@ resultThin=uint8(resultThin>=0);
 
 
 %MF-FDOG thick vessel
-resultThick=uint8(resultThick>=0);
+% resultThick=uint8(resultThick>=0);
 % for z=1:size(resultThick,1)
 %     for x=1:size(resultThick,2)
 %         if resultThick(z,x)>=0
@@ -167,10 +186,20 @@ resultThick=uint8(resultThick>=0);
 %         end
 %     end      
 % end 
+result=finalMF-Tm;
+result=uint8(result>=0);
+figure,imshow(result,[]);
+result=finalMF-T;
+result=uint8(result>=0);
 
-result=resultThin+resultThick;
-level=graythresh(result);
-result=im2bw(result,level);
-figure,imshow(result,[]);
-result=bwareaopen(result,50);
-figure,imshow(result,[]);
+% figure,imshow(resultThick,[])
+% figure,imshow(resultThin,[])
+
+% result=or(resultThin,resultThick);
+% figure,imshow(result,[]);
+
+% level=graythresh(result);
+% result=im2bw(result,level);
+% figure,imshow(result,[]);
+% result=bwareaopen(result,50);
+% figure,imshow(result,[]);
