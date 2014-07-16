@@ -105,24 +105,24 @@ resultThick=uint8(finalThick)-uint8(Tthick);
 
 
 %MF-FDOG thin vessel
-for r=1:size(resultThin,1)
-    for t=1:size(resultThin,2)
-        if resultThin(r,t)>=0
-            resultThin(r,t) = 1;
+for j=1:size(resultThin,1)
+    for k=1:size(resultThin,2)
+        if resultThin(j,k)>=0
+            resultThin(j,k) = 1;
         else 
-            resultThin(r,t) =0;
+            resultThin(j,k) =0;
         end
     end      
 end 
 
 
 %MF-FDOG thick vessel
-for z=1:size(resultThick,1)
-    for x=1:size(resultThick,2)
-        if resultThick(z,x)>=0
-            resultThick(z,x) = 1;
+for j=1:size(resultThick,1)
+    for k=1:size(resultThick,2)
+        if resultThick(j,k)>=0
+            resultThick(j,k) = 1;
         else 
-            resultThick(z,x) =0;
+            resultThick(j,k) =0;
         end
     end      
 end 
