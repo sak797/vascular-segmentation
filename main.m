@@ -80,7 +80,12 @@ for m=1:8
 end
 finalThinFDOG=max(thinFilterimgFDOG,[],3);
 finalThinFDOGmean= imfilter(finalThinFDOG,W);
+figure,imshow(finalThinFDOGmean,[]);
+%%
 finalThinFDOGmeannorm=finalThinFDOGmean./norm(finalThinFDOGmean(:));
+
+figure,imshow(finalThinFDOGmeannorm,[]);
+%%
 %finalThinFDOGmeannorm= mat2gray(finalThinFDOGmean);
 Tthin= (1+ finalThinFDOGmeannorm)*(2.3*uhThin);
 
@@ -101,12 +106,16 @@ for f=1:8
 end
 finalThickFDOG= max(thickFilterimgFDOG,[],3);
 finalThickFDOGmean=imfilter(finalThickFDOG,W);
+figure,imshow(finalThickFDOGmean,[]);
+%%
 finalThickFDOGmeannorm=finalThickFDOGmean./norm(finalThickFDOGmean(:));
+figure, imshow(finalThickFDOGmeannorm,[]);
 %finalThickFDOGmeannorm=mat2gray(finalThickFDOGmean);
+%%
 Tthick=(1+finalThickFDOGmeannorm)*(2.3*uhThick);
 
-resultThin=uint8(finalThin)-uint8(Tthin);
-resultThick=uint8(finalThick)-uint8(Tthick);
+resultThin=(finalThin)-(Tthin);
+resultThick=(finalThick)-(Tthick);
 %imshow(resultThick+resultThin);
 
 %MF-FDOG thin vessel
