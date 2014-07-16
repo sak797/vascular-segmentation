@@ -1,17 +1,18 @@
 clc
 clear all
 close all
-
+%%
 W = (1/(31*31))*ones(31);
 c = 2.3;
 %reads image
 A=imread('01_test.tif');
-imshow(A);
-
+%A=double(A);
+figure,imshow(A,[]);
+%%
 %Green Channel extraction
 gA=A(:,:,2);
-imshow(gA);
-
+figure,imshow(gA,[]);
+%%
 %Match-Filter Kernel for thin vessel
 sThin=1;
 lThin=5;
@@ -34,6 +35,8 @@ for i=1:8
     thinFilterimg(:,:,i)= imfilter(gA,MaskKerthin);
 end
 finalThin=max(thinFilterimg,[],3);
+figure,imshow(finalThin,[]);
+%%
 uhThin=mean(mean(finalThin));
 
 
@@ -57,6 +60,8 @@ for l=1:8
     thickFilterimg(:,:,l)= imfilter(gA,MaskKerthick);
 end
 finalThick= max(thickFilterimg,[],3);
+figure,imshow(finalThick,[]);
+%%
 uhThick=mean(mean(finalThick));
 
 
@@ -75,8 +80,8 @@ for m=1:8
 end
 finalThinFDOG=max(thinFilterimgFDOG,[],3);
 finalThinFDOGmean= imfilter(finalThinFDOG,W);
-%finalThinFDOGmeannorm=finalThinFDOGmean/norm(finalThinFDOGmean);
-finalThinFDOGmeannorm= mat2gray(finalThinFDOGmean);
+finalThinFDOGmeannorm=finalThinFDOGmean./norm(finalThinFDOGmean(:));
+%finalThinFDOGmeannorm= mat2gray(finalThinFDOGmean);
 Tthin= (1+ finalThinFDOGmeannorm)*(2.3*uhThin);
 
 
@@ -96,13 +101,13 @@ for f=1:8
 end
 finalThickFDOG= max(thickFilterimgFDOG,[],3);
 finalThickFDOGmean=imfilter(finalThickFDOG,W);
-%finalThickFDOGmeannorm=finalThickFDOGmean/norm(finalThickFDOGmean);
-finalThickFDOGmeannorm=mat2gray(finalThickFDOGmean);
+finalThickFDOGmeannorm=finalThickFDOGmean./norm(finalThickFDOGmean(:));
+%finalThickFDOGmeannorm=mat2gray(finalThickFDOGmean);
 Tthick=(1+finalThickFDOGmeannorm)*(2.3*uhThick);
 
 resultThin=uint8(finalThin)-uint8(Tthin);
 resultThick=uint8(finalThick)-uint8(Tthick);
-
+%imshow(resultThick+resultThin);
 
 %MF-FDOG thin vessel
 for r=1:size(resultThin,1)
@@ -128,4 +133,4 @@ for z=1:size(resultThick,1)
 end 
 
 result=resultThin+resultThick;
-imshow(result);
+figure,imshow(result,[]);
